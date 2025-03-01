@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState, forwardRef } from "react";
+import axios from "axios";
 import Slider from "react-slick";
 import styled from "styled-components";
 import "slick-carousel/slick/slick.css";
@@ -12,8 +13,10 @@ const CampaignsContainer = styled.div`
 
 const Title = styled.h2`
   font-size: 2.5rem;
-  color: #d10052;
+  font-weight: bold;
+  color: #d6006e;
   margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const SliderWrapper = styled(Slider)`
@@ -25,10 +28,10 @@ const SliderWrapper = styled(Slider)`
 const CampaignCard = styled.div`
   background: #fff;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   text-align: left;
-  transition: 0.3s;
+  transition: transform 0.3s ease-in-out;
 
   &:hover {
     transform: translateY(-5px);
@@ -44,6 +47,11 @@ const ImageWrapper = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  img:hover {
+    transform: scale(1.05);
   }
 `;
 
@@ -82,74 +90,105 @@ const DonateButton = styled.button`
 
   &:hover {
     background: #a0003e;
+    transform: scale(1.05);
   }
 `;
 
-const OngoingCampaigns = () => {
+const OngoingCampaigns = forwardRef((props, ref) => {
+  const [campaigns, setCampaigns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/campaigns");
+        setCampaigns(response.data || []);
+      } catch (err) {
+        console.error("Error fetching campaigns:", err);
+        setError("Failed to load campaigns. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCampaigns();
+  }, []);
+
   const settings = {
     dots: true,
     infinite: true,
     speed: 500,
-    slidesToShow: 3,
+    slidesToShow: Math.min(campaigns.length, 3),
     slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2000,
-    arrows: true,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: Math.min(campaigns.length, 2),
+        },
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: Math.min(campaigns.length, 1),
+        },
+      },
+    ],
   };
 
-  const campaigns = [
-    {
-      img: "/images/campaign1.jpg",
-      title: "Nationally Recognized Care",
-      description: "Providing life-saving procedures like transplants for children.",
-      amount: "$500",
-    },
-    {
-      img: "/images/campaign2.jpg",
-      title: "Maternity & Baby Care",
-      description: "Supporting high-risk moms and babies before, during, and after delivery.",
-      amount: "$250",
-    },
-    {
-      img: "/images/campaign3.jpg",
-      title: "Support for Riley Kids",
-      description: "Helping children overcome anxieties through play and activities.",
-      amount: "$100",
-    },
-    {
-      img: "/images/campaign4.jpg",
-      title: "Clinical Research & Studies",
-      description: "Developing new treatments and innovative healthcare solutions.",
-      amount: "$50",
-    },
-    {
-      img: "/images/campaign5.jpg",
-      title: "Cancer Treatment Programs",
-      description: "Funding new therapies for children battling cancer.",
-      amount: "$400",
-    },
-  ];
+  if (loading)
+    return (
+      <CampaignsContainer aria-live="polite">
+        <Title>Loading campaigns...</Title>
+      </CampaignsContainer>
+    );
+
+  if (error)
+    return (
+      <CampaignsContainer>
+        <Title>{error}</Title>
+      </CampaignsContainer>
+    );
 
   return (
-    <CampaignsContainer>
+    <CampaignsContainer ref={ref}>
       <Title>Ongoing Campaigns</Title>
-      <SliderWrapper {...settings}>
-        {campaigns.map((campaign, index) => (
-          <CampaignCard key={index}>
-            <ImageWrapper>
-              <img src={campaign.img} alt={campaign.title} />
-            </ImageWrapper>
-            <Content>
-              <h3>{campaign.title}</h3>
-              <p>{campaign.description}</p>
-              <span>{campaign.amount}</span>
-            </Content>
-            <DonateButton>DONATE</DonateButton>
-          </CampaignCard>
-        ))}
-      </SliderWrapper>
+      {campaigns.length > 0 ? (
+        <SliderWrapper {...settings}>
+          {campaigns.map((campaign) => (
+            <CampaignCard key={campaign._id}>
+              <ImageWrapper>
+                <img
+                  src={campaign.image || "/images/default.jpg"}
+                  alt={campaign.title || "Campaign Image"}
+                  loading="lazy"
+                />
+              </ImageWrapper>
+              <Content>
+                <h3>{campaign.title || "Untitled Campaign"}</h3>
+                <p>{campaign.description || "No description available."}</p>
+                <span>
+                  {new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  }).format(campaign.raisedAmount || 0)}{" "}
+                  /{" "}
+                  {new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  }).format(campaign.goalAmount || 0)}
+                </span>
+              </Content>
+              <DonateButton>DONATE</DonateButton>
+            </CampaignCard>
+          ))}
+        </SliderWrapper>
+      ) : (
+        <p>No campaigns available at the moment.</p>
+      )}
     </CampaignsContainer>
   );
-};
+});
 
 export default OngoingCampaigns;

@@ -7,24 +7,24 @@ const NavbarContainer = styled.nav`
   top: 0;
   left: 0;
   width: 100%;
-  background:; /* Ensures navbar is always visible */
   padding: 15px 5%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 1000; /* Keeps it above all content */
-  height: 70px;
+  z-index: 1000;
+  background: transparent;
+  box-shadow: none;
+  transition: background 0.3s ease-in-out;
 `;
 
 const Logo = styled.img`
-top: 20;
   height: 65px;
 `;
 
 const NavRight = styled.div`
   display: flex;
   align-items: center;
-  gap: 30px; /* Space between links */
+  gap: 30px;
 
   @media (max-width: 768px) {
     gap: 20px;
@@ -32,9 +32,10 @@ const NavRight = styled.div`
 `;
 
 const NavLink = styled(Link)`
-  color: white;
+  color: #ADD8E6;
   text-decoration: none;
-  font-size: 20px;
+  font-weight: 1000;
+  font-size: 18px;
   transition: color 0.3s ease-in-out;
 
   &:hover {
@@ -49,9 +50,11 @@ const DashboardButton = styled(Link)`
   padding: 8px 16px;
   border-radius: 5px;
   text-decoration: none;
+  border: 1px solid black;
+  transition: background 0.3s ease-in-out;
 
   &:hover {
-    background: #00c4b4;
+    background: black;
     color: white;
   }
 `;
@@ -59,12 +62,12 @@ const DashboardButton = styled(Link)`
 function Navbar() {
   return (
     <NavbarContainer>
-      {/* Logo on the left (Always visible) */}
+      {/* Logo on the left */}
       <Link to="/">
         <Logo src="/images/logo.png" alt="Logo" />
       </Link>
 
-      {/* Navbar items aligned to the right */}
+      {/* Navbar links */}
       <NavRight>
         <NavLink to="/">Home</NavLink>
         <NavLink to="/how-it-works">How It Works</NavLink>
